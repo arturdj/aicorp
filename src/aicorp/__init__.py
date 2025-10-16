@@ -1,0 +1,11 @@
+"""AI Corp WebUI API client package."""
+
+__version__ = "1.0.0"
+__author__ = "AI Corp Team"
+__description__ = "A Python client for interacting with AI Corp's WebUI API service"
+
+from .api_client import AiCorpClient
+from .config import Config
+from .logger import setup_logger
+
+__all__ = ["AiCorpClient", "Config", "setup_logger"]
