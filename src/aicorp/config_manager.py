@@ -29,7 +29,7 @@ class ConfigManager:
         current_dir = os.getcwd()
         
         # Look for common project indicators
-        indicators = ['pyproject.toml', 'setup.py', '.git', 'requirements.txt']
+        indicators = ['pyproject.toml', '.git']
         
         # Check current directory and parents
         check_dir = current_dir

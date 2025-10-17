@@ -1,6 +1,6 @@
 """AI Corp WebUI API client package."""
 
-__version__ = "1.1.2"
+__version__ = "1.2.0"
 __author__ = "@arturdj"
 __description__ = "A Python client for interacting with AI Corp's WebUI API service"
 

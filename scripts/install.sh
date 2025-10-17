@@ -38,18 +38,18 @@ if command -v python3 &> /dev/null; then
     PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
     print_success "Python $PYTHON_VERSION found"
     
-    # Check if Python version is 3.7 or higher
+    # Check if Python version is 3.8 or higher
     PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d. -f1)
     PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d. -f2)
     
-    if [ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -ge 7 ]; then
-        print_success "Python version is compatible (3.7+)"
+    if [ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -ge 8 ]; then
+        print_success "Python version is compatible (3.8+)"
     else
-        print_error "Python 3.7 or higher is required. Found: $PYTHON_VERSION"
+        print_error "Python 3.8 or higher is required. Found: $PYTHON_VERSION"
         exit 1
     fi
 else
-    print_error "Python 3 is not installed. Please install Python 3.7 or higher."
+    print_error "Python 3 is not installed. Please install Python 3.8 or higher."
     exit 1
 fi
 

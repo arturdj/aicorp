@@ -1,6 +1,5 @@
 include README.md
 include LICENSE
-include requirements.txt
 include .env.example
 include INSTALL.md
 recursive-include src *.py

@@ -2,6 +2,21 @@
 
 All notable changes to the AI Corp WebUI API Client project are documented in this file.
 
+## [1.2.0] - 2025-10-17
+
+### Removed
+- `requirements.txt` - Dependencies now managed only via `pyproject.toml`
+- `verify_setup.py` - Legacy setup verification script
+
+### Changed
+- Python version requirement updated from 3.7+ to 3.8+ in `install.sh`
+- Project root detection in `config_manager.py` no longer checks for `setup.py` or `requirements.txt`
+- `MANIFEST.in` no longer includes `requirements.txt`
+- CHANGELOG references updated to reflect `pyproject.toml`-only approach
+
+### Fixed
+- Consistent Python 3.8+ requirement across all project files
+
 ## [1.1.2] - 2025-10-17
 
 ### 🔒 Breaking Changes
@@ -108,7 +123,7 @@ All notable changes to the AI Corp WebUI API Client project are documented in th
 
 #### Dependencies
 - Added `urllib3>=1.26.0,<2.0.0` constraint for LibreSSL compatibility
-- Updated `requirements.txt` to match `pyproject.toml` dependencies
+- Consolidated dependency management to use only `pyproject.toml`
 - Improved dependency resolution for different Python environments
 
 #### Scripts & Tools
