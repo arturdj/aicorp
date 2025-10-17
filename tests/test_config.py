@@ -27,15 +27,21 @@ class TestConfig:
 
     @patch.dict(os.environ, {'WEBUI_BASE_URL': 'https://ai.corp.azion.com'}, clear=True)
     @patch('aicorp.config.Config._load_system_prompt')
-    def test_config_defaults(self, mock_load_prompt):
-        """Test config with default values when no environment variables are set."""
+    def test_config_missing_api_key_raises_error(self, mock_load_prompt):
+        """Test config raises error when API key is missing."""
         mock_load_prompt.return_value = "Default system prompt"
-        config = Config()
         
-        assert config.base_url == 'https://ai.corp.azion.com'
-        assert config.api_key is None
-        assert 'Content-Type' in config.headers
-        assert config.headers['Content-Type'] == 'application/json'
+        with pytest.raises(ValueError, match="WEBUI_API_KEY environment variable is required"):
+            Config()
+
+    @patch.dict(os.environ, {}, clear=True)
+    @patch('aicorp.config.Config._load_system_prompt')
+    def test_config_missing_base_url_raises_error(self, mock_load_prompt):
+        """Test config raises error when base URL is missing."""
+        mock_load_prompt.return_value = "Default system prompt"
+        
+        with pytest.raises(ValueError, match="WEBUI_BASE_URL environment variable is required"):
+            Config()
 
     @patch.dict(os.environ, {
         'WEBUI_BASE_URL': 'https://ai.corp.azion.com',
@@ -50,7 +56,10 @@ class TestConfig:
         assert 'Authorization' in config.headers
         assert config.headers['Authorization'] == 'Bearer test-key'
 
-    @patch.dict(os.environ, {'WEBUI_BASE_URL': 'https://ai.corp.azion.com'})
+    @patch.dict(os.environ, {
+        'WEBUI_BASE_URL': 'https://ai.corp.azion.com',
+        'WEBUI_API_KEY': 'test-key'
+    })
     @patch('aicorp.config.Config._load_system_prompt')
     def test_config_endpoints(self, mock_load_prompt):
         """Test endpoint URL construction."""
@@ -62,6 +71,7 @@ class TestConfig:
 
     @patch.dict(os.environ, {
         'WEBUI_BASE_URL': 'https://ai.corp.azion.com',
+        'WEBUI_API_KEY': 'test-key',
         'SYSTEM_PROMPT_FILE': 'test_prompt.txt'
     })
     @patch('builtins.open', new_callable=mock_open, read_data="Test prompt for {platform_info}")
@@ -83,6 +93,7 @@ class TestConfig:
 
     @patch.dict(os.environ, {
         'WEBUI_BASE_URL': 'https://ai.corp.azion.com',
+        'WEBUI_API_KEY': 'test-key',
         'SYSTEM_PROMPT_FILE': 'nonexistent.txt'
     })
     @patch('os.path.exists')

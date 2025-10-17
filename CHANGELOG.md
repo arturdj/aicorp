@@ -2,6 +2,48 @@
 
 All notable changes to the AI Corp WebUI API Client project are documented in this file.
 
+## [1.1.2] - 2025-10-17
+
+### 🔒 Breaking Changes
+
+#### API Key Requirements
+- **Mandatory API Key**: `WEBUI_API_KEY` environment variable is now required for all operations
+- **Configuration Validation**: Added strict validation that prevents initialization without API key
+- **Interactive Setup**: Configuration setup now requires API key input and validates it's provided
+- **Error Handling**: Clear error messages when API key is missing: "WEBUI_API_KEY environment variable is required"
+
+### 🛠️ Technical Improvements
+
+#### Configuration System
+- **Enhanced Validation**: Both `WEBUI_BASE_URL` and `WEBUI_API_KEY` are now mandatory at startup
+- **Simplified Headers**: Authorization header is always included since API key is guaranteed to exist
+- **Config Manager Updates**: Removed "optional" language from API key setup, added validation loop
+- **Model Fetching**: `get_available_models()` now requires both base URL and API key before attempting API calls
+
+#### Testing & Quality
+- **Updated Test Suite**: All tests now properly handle mandatory API key requirement
+- **New Test Cases**: Added specific tests for missing API key and base URL validation
+- **Error Scenario Coverage**: Comprehensive testing of configuration validation failures
+- **Backward Compatibility**: Removed tests that expected API key to be optional
+
+#### Documentation Updates
+- **Environment Examples**: Updated `.env.example` with cleaner API key format
+- **Setup Instructions**: Configuration examples now emphasize API key requirement
+- **Error Documentation**: Clear guidance on resolving missing API key errors
+
+### 🚨 Migration Notes
+
+**For existing users upgrading to v1.1.2:**
+
+1. **Ensure API Key is Set**: Verify your `.env` file or environment has `WEBUI_API_KEY` configured
+2. **Update Configuration**: Run `aicorp --setup` if you need to add an API key to existing configuration
+3. **Check Scripts**: Any automation scripts must include API key in environment variables
+
+**Breaking Change Impact:**
+- Applications that previously worked without API key will now fail with clear error message
+- This change improves security by ensuring all API calls are properly authenticated
+- No functional changes for users who already had API key configured
+
 ## [1.1.1] - 2025-10-17
 
 ### 🔒 Security Enhancements

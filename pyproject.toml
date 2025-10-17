@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aicorp-client"
-version = "1.1.1"
+version = "1.1.2"
 description = "A secure, modern Python client for AI Corp's WebUI API with comprehensive input validation, smart installation, and professional system management"
 readme = "README.md"
 license = {text = "MIT"}

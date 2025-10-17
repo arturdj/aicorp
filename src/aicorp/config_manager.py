@@ -130,13 +130,12 @@ class ConfigManager:
             current_config = self.load_existing_config()
             
             # Check if we have minimum required config
-            if 'WEBUI_BASE_URL' not in current_config:
+            if 'WEBUI_BASE_URL' not in current_config or 'WEBUI_API_KEY' not in current_config:
                 return None
             
             # Temporarily set environment variables
             os.environ['WEBUI_BASE_URL'] = current_config['WEBUI_BASE_URL']
-            if 'WEBUI_API_KEY' in current_config:
-                os.environ['WEBUI_API_KEY'] = current_config['WEBUI_API_KEY']
+            os.environ['WEBUI_API_KEY'] = current_config['WEBUI_API_KEY']
             
             config = Config()
             client = AiCorpClient(config, verbosity=0)
@@ -202,10 +201,10 @@ class ConfigManager:
         
         print()
         
-        # 2. API Key (optional)
+        # 2. API Key (required)
         current_key = existing_config.get('WEBUI_API_KEY', '')
-        print(f"{Colors.BOLD}2. API Key (Optional){Colors.RESET}")
-        print(f"{Colors.DIM}   Your API key for authentication (leave empty if not required){Colors.RESET}")
+        print(f"{Colors.BOLD}2. API Key (Required){Colors.RESET}")
+        print(f"{Colors.DIM}   Your API key for authentication{Colors.RESET}")
         if current_key:
             masked_key = current_key[:8] + "..." if len(current_key) > 8 else current_key
             print(f"{Colors.DIM}   Current: {masked_key}{Colors.RESET}")
@@ -220,7 +219,14 @@ class ConfigManager:
             new_config['WEBUI_API_KEY'] = new_key
         elif current_key:
             new_config['WEBUI_API_KEY'] = current_key
-        # If no key provided and none exists, don't add it
+        else:
+            # API Key is required, prompt until provided
+            while True:
+                print(f"{Colors.RED}   API Key is required and cannot be empty.{Colors.RESET}")
+                new_key = input("   Enter API Key: ").strip()
+                if new_key:
+                    new_config['WEBUI_API_KEY'] = new_key
+                    break
         
         print()
         
@@ -267,11 +273,8 @@ class ConfigManager:
         # 5. Confirmation and save
         print(f"{Colors.BOLD}Configuration Summary:{Colors.RESET}")
         print(f"   WebUI Base URL: {Colors.WHITE}{new_config['WEBUI_BASE_URL']}{Colors.RESET}")
-        if 'WEBUI_API_KEY' in new_config:
-            masked = new_config['WEBUI_API_KEY'][:8] + "..." if len(new_config['WEBUI_API_KEY']) > 8 else new_config['WEBUI_API_KEY']
-            print(f"   API Key: {Colors.WHITE}{masked}{Colors.RESET}")
-        else:
-            print(f"   API Key: {Colors.DIM}(not set){Colors.RESET}")
+        masked = new_config['WEBUI_API_KEY'][:8] + "..." if len(new_config['WEBUI_API_KEY']) > 8 else new_config['WEBUI_API_KEY']
+        print(f"   API Key: {Colors.WHITE}{masked}{Colors.RESET}")
         print(f"   Default Model: {Colors.WHITE}{new_config['DEFAULT_MODEL']}{Colors.RESET}")
         print(f"   System Prompt File: {Colors.DIM}{new_config['SYSTEM_PROMPT_FILE']}{Colors.RESET}")
         print()

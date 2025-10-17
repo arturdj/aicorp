@@ -39,15 +39,19 @@ class Config:
         if not self.base_url:
             raise ValueError("WEBUI_BASE_URL environment variable is required")
         
+        if not self.api_key:
+            raise ValueError("WEBUI_API_KEY environment variable is required")
+        
         # Load system prompt from file
         self.system_prompt = self._load_system_prompt()
     
     @property
     def headers(self):
         """Get headers for AI Corp WebUI API requests."""
-        headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
         return headers
     
     @property
