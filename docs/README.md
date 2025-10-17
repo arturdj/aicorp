@@ -1,6 +1,6 @@
 # AI Corp WebUI API Client Documentation
 
-This directory contains comprehensive documentation for the AI Corp WebUI API Client.
+This directory contains comprehensive documentation for the secure, modern AI Corp WebUI API Client with input validation and professional system management.
 
 ## Documentation Structure
 

@@ -16,7 +16,7 @@ class ConfigManager:
             azion_dir = os.path.join(home_dir, ".azion")
             self.full_env_path = os.path.join(azion_dir, ".aicorp.env")
         else:
-            # Support custom path for testing or legacy usage
+            # Support custom path for testing
             if os.path.isabs(env_file_path):
                 self.full_env_path = env_file_path
             else:

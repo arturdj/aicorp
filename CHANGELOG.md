@@ -2,6 +2,44 @@
 
 All notable changes to the AI Corp WebUI API Client project are documented in this file.
 
+## [1.1.1] - 2025-10-17
+
+### 🔒 Security Enhancements
+
+#### Input Validation & Security
+- **Comprehensive Input Validation**: Added validation for all user inputs and API parameters
+- **Parameter Whitelisting**: Only allows validated API parameters (max_tokens, temperature, top_p, stream, top_k, frequency_penalty, presence_penalty, stop, seed)
+- **Range Validation**: Numeric parameters validated against safe ranges (e.g., temperature: 0.0-2.0, max_tokens: 1-32768)
+- **Message Structure Validation**: Chat messages validated for proper structure and non-empty content
+- **Type Checking**: Strict type validation for all parameters with clear error messages
+
+#### Security Audit & Cleanup
+- **Removed Hardcoded Secrets**: Eliminated hardcoded API key from repository
+- **Safe Error Handling**: Graceful degradation with proper logging instead of exposing internal errors
+- **Secret Masking**: API keys properly masked in debug logs
+- **Secure File Operations**: Validated file paths and proper encoding handling
+
+### 🧹 Code Cleanup & Optimization
+
+#### Deprecated Code Removal
+- **Unused Color Constants**: Removed 20+ unused ANSI color codes, keeping only 8 used colors
+- **Version Synchronization**: Updated package version to 1.1.0 across all files
+- **Dependency Cleanup**: Removed unused development dependencies (black, flake8, mypy)
+- **Configuration Cleanup**: Removed unused tool configurations from pyproject.toml
+- **File Cleanup**: Removed temporary log files and cache files
+
+#### Performance Improvements
+- **Reduced Package Size**: Smaller codebase with optimized dependencies
+- **Faster Installation**: Fewer optional dependencies to install
+- **Better Maintainability**: Cleaner code structure with consistent formatting
+
+### 🧪 Enhanced Testing
+
+#### Security Testing
+- **Input Validation Tests**: Comprehensive test coverage for all validation scenarios
+- **Parameter Range Tests**: Tests for out-of-range values and invalid types
+- **Error Handling Tests**: Validation of proper error responses and logging
+
 ## [1.1.0] - 2025-10-16
 
 ### 🚀 Major Enhancements

@@ -1,6 +1,6 @@
 # AI Corp WebUI API Client - Installation Guide
 
-This guide provides detailed installation instructions for macOS users to get the `aicorp` command-line tool working in their terminal.
+This guide provides detailed installation instructions for the secure, modern `aicorp` command-line tool with comprehensive input validation and professional system management.
 
 ## 🍎 macOS Installation
 

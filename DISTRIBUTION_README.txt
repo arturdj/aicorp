@@ -1,7 +1,7 @@
-AI Corp WebUI API Client - Distribution Package
-===============================================
+AI Corp WebUI API Client - Distribution Package v1.1.1
+========================================================
 
-This package contains the AI Corp WebUI API client for macOS.
+This package contains the secure, modern AI Corp WebUI API client for macOS with comprehensive input validation and professional system management.
 
 QUICK INSTALLATION:
 1. Extract this archive
@@ -30,11 +30,14 @@ aicorp --list-models
 aicorp "Hello, world!"
 
 FEATURES:
-- Virtual environment detection
-- Automatic PATH configuration
-- urllib3 LibreSSL compatibility
-- Interactive installation assistance
-- Comprehensive uninstall option
+- 🔒 Comprehensive input validation and security
+- 🔍 Virtual environment detection
+- 🛠️ Automatic PATH configuration  
+- 🔧 urllib3 LibreSSL compatibility
+- 🤖 Interactive installation assistance
+- 🧹 Comprehensive uninstall option
+- ✅ Parameter whitelisting and range validation
+- 🛡️ Safe error handling and secret masking
 
 For detailed instructions, see README.md and INSTALL.md
 

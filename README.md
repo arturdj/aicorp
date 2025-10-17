@@ -1,6 +1,6 @@
 # AI Corp WebUI API Client
 
-A modern, well-structured Python client for interacting with AI Corp's WebUI API service for model management and text generation.
+A secure, modern Python client for interacting with AI Corp's WebUI API service with comprehensive input validation, smart installation, and professional system management.
 
 ## Project Structure
 
@@ -9,8 +9,9 @@ aicorp-client/
 ├── src/aicorp/               # Source code
 │   ├── __init__.py           # Package initialization
 │   ├── cli.py                # Command-line interface
-│   ├── api_client.py         # API client implementation
+│   ├── api_client.py         # Secure API client with input validation
 │   ├── config.py             # Configuration management
+│   ├── config_manager.py     # Interactive configuration setup
 │   └── logger.py             # Logging utilities
 ├── config/                   # Configuration files
 │   └── system_prompt.txt     # AI system prompt template
@@ -43,29 +44,22 @@ aicorp-client/
 - Supports model listing, text generation, and chat conversations
 - Includes comprehensive error handling and logging
 
-### `webui_client.py` (Deprecated)
-- Legacy WebUI client - functionality moved to `api_client.py`
-- Kept for backward compatibility
-
-### `models.py`
-- Parses different API response formats
-- Extracts model names from various response structures
-- Handles list and dictionary response formats
+### `config_manager.py`
+- Interactive configuration setup with guided prompts
+- Azion-standard configuration location management
+- Automatic model detection and validation
+- User-friendly colored terminal interface
 
 ### `logger.py`
 - Configures centralized logging
 - Outputs to both file (`aicorp.log`) and console
 - Provides structured logging format
 
-### `aicorp.py`
-- Main script with command-line interface
-- Provides unified interface to AI Corp WebUI API
-- Commands for model listing and prompt sending
-
-### `webui_example.py`
-- Comprehensive examples of AI Corp WebUI API usage
-- Demonstrates simple prompts, chat conversations, and model listing
-- Educational resource for AI Corp WebUI integration
+### CLI Entry Point (`aicorp`)
+- Modern command-line interface with argument parsing
+- Progress indicators and colored output
+- Comprehensive error handling and user feedback
+- Interactive configuration and model management
 
 ## Installation
 
@@ -90,6 +84,7 @@ aicorp-client/
    - 📝 Create configuration file from template
    - 🎯 Provide shell-specific PATH setup instructions
    - 🤖 Optionally auto-configure your shell PATH
+   - 🔒 Security-hardened installation with input validation
 
 3. **Configure your API settings:**
    ```bash
@@ -270,14 +265,22 @@ python examples/basic_usage.py
 - **Dependency Management**: Proper version constraints for stable operation
 - **Cross-Platform Support**: Works on macOS with system Python and virtual environments
 
+### 🔒 Security Features
+- **Input Validation**: Comprehensive validation of all user inputs and API parameters
+- **Parameter Whitelisting**: Only allows validated API parameters to prevent injection
+- **Range Validation**: Numeric parameters validated against safe ranges
+- **Secret Management**: Proper handling of API keys with masking in logs
+- **Safe File Operations**: Secure file handling with proper path validation
+
 ## AI Corp WebUI API Features
 
 The AI Corp client (`api_client.py`) provides comprehensive text generation capabilities:
 
 ### Text Generation
-- **Simple Prompts**: Send text prompts with customizable parameters
-- **Chat Conversations**: Support for multi-turn conversations with system, user, and assistant roles
-- **Configurable Parameters**: Control temperature, max_tokens, top_p, top_k, repetition_penalty, and more
+- **Simple Prompts**: Send text prompts with comprehensive input validation
+- **Chat Conversations**: Support for multi-turn conversations with message structure validation
+- **Secure Parameters**: Validated parameters including temperature (0.0-2.0), max_tokens (1-32768), top_p (0.0-1.0), and more
+- **Error Handling**: Graceful handling of invalid inputs with clear error messages
 
 ### Model Management
 - **Model Listing**: Fetch available models from the AI Corp WebUI API
