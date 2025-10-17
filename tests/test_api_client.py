@@ -106,3 +106,55 @@ class TestAiCorpClient:
             
             mock_send.assert_called_once()
             assert result == {"test": "response"}
+
+    def test_input_validation_empty_prompt(self):
+        """Test input validation for empty prompt."""
+        result = self.client.send_prompt("")
+        assert result is None
+        
+        result = self.client.send_prompt("   ")
+        assert result is None
+        
+        result = self.client.send_prompt(None)
+        assert result is None
+
+    def test_input_validation_invalid_model(self):
+        """Test input validation for invalid model."""
+        with patch.object(self.client, 'logger') as mock_logger:
+            result = self.client.send_prompt("test", model=123)
+            assert result is None
+            mock_logger.error.assert_called()
+
+    def test_parameter_validation_ranges(self):
+        """Test parameter validation with ranges."""
+        with patch('aicorp.api_client.requests.post') as mock_post:
+            mock_response = Mock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {"choices": [{"message": {"content": "Test"}}]}
+            mock_post.return_value = mock_response
+            
+            # Test valid parameters
+            result = self.client.send_prompt("test", temperature=0.5, max_tokens=100)
+            assert result is not None
+            
+            # Test invalid parameters (should be ignored)
+            with patch.object(self.client, 'logger') as mock_logger:
+                result = self.client.send_prompt("test", temperature=5.0, max_tokens=-1)
+                assert result is not None
+                mock_logger.warning.assert_called()
+
+    def test_chat_input_validation(self):
+        """Test input validation for chat messages."""
+        # Test empty messages
+        result = self.client.send_chat_prompt([])
+        assert result is None
+        
+        result = self.client.send_chat_prompt(None)
+        assert result is None
+        
+        # Test invalid message structure
+        result = self.client.send_chat_prompt([{"role": "user"}])  # Missing content
+        assert result is None
+        
+        result = self.client.send_chat_prompt([{"content": ""}])  # Empty content
+        assert result is None
