@@ -104,3 +104,77 @@ class TestConfig:
         config = Config()
         
         assert config.system_prompt == "You are a helpful AI assistant that provides accurate and useful responses."
+
+    @patch.dict(os.environ, {
+        'WEBUI_BASE_URL': 'https://ai.corp.azion.com',
+        'WEBUI_API_KEY': 'test-key',
+        'SYSTEM_PROMPT_FILE': 'test_prompt.txt'
+    })
+    @patch('builtins.open', side_effect=PermissionError("Permission denied"))
+    @patch('os.path.exists')
+    def test_system_prompt_permission_error(self, mock_exists, mock_file):
+        """Test system prompt fallback when file cannot be read due to permissions."""
+        mock_exists.return_value = True
+        
+        with patch('builtins.print') as mock_print:
+            config = Config()
+            
+            assert config.system_prompt == "You are a helpful AI assistant that provides accurate and useful responses."
+            mock_print.assert_called_once()
+            assert "Warning: Could not load system prompt file" in mock_print.call_args[0][0]
+
+    @patch.dict(os.environ, {
+        'WEBUI_BASE_URL': 'https://ai.corp.azion.com',
+        'WEBUI_API_KEY': 'test-key',
+        'SYSTEM_PROMPT_FILE': '/absolute/path/to/prompt.txt'
+    })
+    @patch('builtins.open', new_callable=mock_open, read_data="Absolute path prompt")
+    @patch('os.path.exists')
+    def test_system_prompt_absolute_path(self, mock_exists, mock_file):
+        """Test system prompt loading with absolute path."""
+        mock_exists.return_value = True
+        
+        config = Config()
+        
+        assert "Absolute path prompt" in config.system_prompt
+        mock_file.assert_called_once_with('/absolute/path/to/prompt.txt', 'r', encoding='utf-8')
+
+    @patch.dict(os.environ, {
+        'WEBUI_BASE_URL': 'https://ai.corp.azion.com',
+        'WEBUI_API_KEY': 'test-key'
+    }, clear=True)
+    def test_config_default_values(self):
+        """Test config default values."""
+        with patch('aicorp.config.Config._load_system_prompt') as mock_load_prompt:
+            mock_load_prompt.return_value = "Test system prompt"
+            config = Config()
+            
+            assert config.default_model == "Azion Copilot"
+            assert config.system_prompt_file == "config/system_prompt.txt"
+
+    @patch.dict(os.environ, {
+        'WEBUI_BASE_URL': 'https://ai.corp.azion.com',
+        'WEBUI_API_KEY': 'test-key',
+        'DEFAULT_MODEL': 'custom-model'
+    })
+    def test_config_custom_default_model(self):
+        """Test config with custom default model."""
+        with patch('aicorp.config.Config._load_system_prompt') as mock_load_prompt:
+            mock_load_prompt.return_value = "Test system prompt"
+            config = Config()
+            
+            assert config.default_model == "custom-model"
+
+    @patch.dict(os.environ, {
+        'WEBUI_BASE_URL': 'https://test.com/',  # URL with trailing slash
+        'WEBUI_API_KEY': 'test-key'
+    })
+    def test_config_url_with_trailing_slash(self):
+        """Test config handles base URL with trailing slash correctly."""
+        with patch('aicorp.config.Config._load_system_prompt') as mock_load_prompt:
+            mock_load_prompt.return_value = "Test system prompt"
+            config = Config()
+            
+            # Endpoints should handle trailing slash correctly
+            assert config.models_endpoint == "https://test.com/api/v1/models"
+            assert config.generate_endpoint == "https://test.com/api/chat/completions"

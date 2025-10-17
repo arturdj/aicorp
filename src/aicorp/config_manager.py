@@ -251,14 +251,28 @@ class ConfigManager:
         else:
             print(f"{Colors.YELLOW}   Could not fetch models (will use default){Colors.RESET}")
         
-        model_prompt = f"   Enter default model name"
+        model_prompt = f"   Enter model name or index number"
         if current_model:
             model_prompt += f" (press Enter to keep current)"
         model_prompt += ": "
         
-        new_model = input(model_prompt).strip()
-        if new_model:
-            new_config['DEFAULT_MODEL'] = new_model
+        new_model_input = input(model_prompt).strip()
+        if new_model_input:
+            # Check if input is a number (index)
+            if new_model_input.isdigit():
+                index = int(new_model_input)
+                if available_models and 1 <= index <= len(available_models):
+                    new_config['DEFAULT_MODEL'] = available_models[index - 1]
+                else:
+                    print(f"{Colors.RED}   Invalid index. Please enter a number between 1 and {len(available_models) if available_models else 0}.{Colors.RESET}")
+                    # Fall back to asking again or using current/default
+                    if current_model:
+                        new_config['DEFAULT_MODEL'] = current_model
+                    else:
+                        new_config['DEFAULT_MODEL'] = 'Azion Copilot'
+            else:
+                # Input is a model name
+                new_config['DEFAULT_MODEL'] = new_model_input
         elif current_model:
             new_config['DEFAULT_MODEL'] = current_model
         else:

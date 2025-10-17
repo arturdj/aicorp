@@ -57,12 +57,14 @@ class Config:
     @property
     def models_endpoint(self):
         """Get the AI Corp WebUI models API endpoint."""
-        return f"{self.base_url}/api/v1/models"
+        base_url = self.base_url.rstrip('/')
+        return f"{base_url}/api/v1/models"
     
     @property
     def generate_endpoint(self):
         """Get the AI Corp WebUI text generation API endpoint."""
-        return f"{self.base_url}/api/chat/completions"
+        base_url = self.base_url.rstrip('/')
+        return f"{base_url}/api/chat/completions"
     
     def _load_system_prompt(self):
         """Load system prompt from file with platform info substitution."""
