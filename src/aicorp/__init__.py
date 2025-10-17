@@ -7,5 +7,6 @@ __description__ = "A Python client for interacting with AI Corp's WebUI API serv
 from .api_client import AiCorpClient
 from .config import Config
 from .logger import setup_logger
+from .config_manager import ConfigManager
 
-__all__ = ["AiCorpClient", "Config", "setup_logger"]
+__all__ = ["AiCorpClient", "Config", "setup_logger", "ConfigManager"]

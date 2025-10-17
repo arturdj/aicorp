@@ -4,8 +4,26 @@ import os
 import platform
 from dotenv import load_dotenv
 
+def _get_config_file_path():
+    """Get the path to the configuration file."""
+    # First try the new Azion config location
+    home_dir = os.path.expanduser("~")
+    azion_config = os.path.join(home_dir, ".azion", ".aicorp.env")
+    
+    if os.path.exists(azion_config):
+        return azion_config
+    
+    # Fallback to project-local .env for backward compatibility
+    project_env = os.path.join(os.getcwd(), ".env")
+    if os.path.exists(project_env):
+        return project_env
+    
+    # Return the preferred location even if it doesn't exist
+    return azion_config
+
 # Load environment variables from .env file
-load_dotenv()
+config_file = _get_config_file_path()
+load_dotenv(config_file)
 
 
 class Config:

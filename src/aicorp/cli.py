@@ -11,6 +11,7 @@ from datetime import datetime
 from .config import Config
 from .api_client import AiCorpClient
 from .logger import setup_logger
+from .config_manager import ConfigManager
 
 # ANSI color codes for terminal output
 class Colors:
@@ -96,7 +97,7 @@ def get_terminal_width():
         return 80
 
 
-def format_ai_response(response_data, prompt, model=None):
+def format_ai_response(response_data, prompt, model=None, interaction_time=None):
     """Format AI response with compact, CLI-friendly output."""
     if not response_data or not isinstance(response_data, dict):
         return
@@ -119,11 +120,12 @@ def format_ai_response(response_data, prompt, model=None):
     timestamp = datetime.now().strftime("%H:%M:%S")
     total_tokens = usage.get('total_tokens', 0) if usage else 0
     
-    # Create compact info line
+    # Create compact info line with timing
+    time_str = f" | {interaction_time:.2f}s" if interaction_time else ""
     if total_tokens > 0:
-        info_line = f"{Colors.DIM}[{model_name}] {total_tokens:,} tokens | {timestamp}{Colors.RESET}"
+        info_line = f"{Colors.DIM}[{model_name}] {total_tokens:,} tokens{time_str} | {timestamp}{Colors.RESET}"
     else:
-        info_line = f"{Colors.DIM}[{model_name}] {timestamp}{Colors.RESET}"
+        info_line = f"{Colors.DIM}[{model_name}]{time_str} | {timestamp}{Colors.RESET}"
     
     print(f"\n{info_line}")
     print(f"{Colors.CYAN}{'─' * min(term_width, 80)}{Colors.RESET}")
@@ -241,6 +243,9 @@ def send_prompt(config, prompt, model=None, verbosity=2):
             print(f"Error: Model '{model}' not found in available_models.")
             return "invalid_model"
     
+    # Start timing the interaction
+    start_time = time.time()
+    
     # Show progress indicator during API call
     progress = ProgressIndicator("Asking {} for help...".format(model))
     progress.start()
@@ -250,9 +255,12 @@ def send_prompt(config, prompt, model=None, verbosity=2):
     finally:
         progress.stop()
     
+    # Calculate interaction time
+    interaction_time = time.time() - start_time
+    
     if response:
-        # Use beautiful formatting for the response
-        format_ai_response(response, prompt, model)
+        # Use beautiful formatting for the response with timing
+        format_ai_response(response, prompt, model, interaction_time)
         return True
     else:
         print(f"{Colors.RED}❌ Failed to get response from AI Corp WebUI API{Colors.RESET}")
@@ -266,6 +274,7 @@ def create_parser(default_model="Azion Copilot"):
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  %(prog)s --config                           # Interactive configuration setup
   %(prog)s --list-models                      # Show available AI Corp models
   %(prog)s "Hello, world!"                    # Send prompt with default model
   %(prog)s --model gpt-3.5 "Hi!"              # Send prompt with specific model
@@ -290,6 +299,12 @@ Examples:
     )
     
     parser.add_argument(
+        '--config',
+        action='store_true',
+        help='Interactive configuration setup for .env file'
+    )
+    
+    parser.add_argument(
         '-m',
         '--model',
         type=str,
@@ -310,16 +325,30 @@ Examples:
 
 def main():
     """Main function with command-line interface."""
+    # First, parse arguments to check for config command
+    # We need to handle config separately since it might run before .env exists
+    parser = create_parser()  # Use default model for now
+    args = parser.parse_args()
+    
+    # Handle config command first (doesn't require existing config)
+    if args.config:
+        config_manager = ConfigManager()
+        success = config_manager.interactive_setup()
+        if success:
+            print(f"\n{Colors.GREEN}✓ Configuration complete! You can now use aicorp commands.{Colors.RESET}")
+        return
+    
+    # For all other commands, load the config
     try:
-        # Load config first to get default model
         config = Config()
+        # Re-create parser with actual default model from config
         parser = create_parser(default_model=config.default_model)
         args = parser.parse_args()
         logger = setup_logger(__name__, verbosity=args.verbose)
     except ValueError as e:
         # Handle config loading errors (e.g., missing WEBUI_BASE_URL)
         print(f"{Colors.RED}Configuration error: {str(e)}{Colors.RESET}")
-        print(f"{Colors.DIM}Please check your .env file configuration{Colors.RESET}")
+        print(f"{Colors.DIM}Run 'aicorp --config' to set up your configuration{Colors.RESET}")
         return
     except Exception as e:
         # Handle other initialization errors
@@ -339,7 +368,7 @@ def main():
         
         # Handle commands with unified show_models logic
         show_models_needed = args.list_models
-        executed_command = args.list_models
+        executed_command = args.list_models or args.config
         
         if args.prompt:
             result = send_prompt(config, args.prompt, args.model, verbosity=args.verbose)

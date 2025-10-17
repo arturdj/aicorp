@@ -93,7 +93,11 @@ aicorp-client/
 
 3. **Configure your API settings:**
    ```bash
-   nano .env  # Edit with your API credentials
+   # Interactive configuration (recommended)
+   aicorp --config
+   
+   # Or manually edit the .env file
+   nano .env
    ```
 
 ### Alternative Installation Methods
@@ -147,7 +151,34 @@ make uninstall
 
 ## Configuration
 
-Configure environment variables in `.env`:
+### Interactive Configuration (Recommended)
+
+Use the interactive configuration command to easily set up your API credentials:
+
+```bash
+aicorp --config
+```
+
+This will guide you through:
+- **WebUI Base URL**: Default is `https://ai.corp.azion.com` (press Enter for default)
+- **API Key**: Your authentication key (optional, leave empty if not required)
+- **Default Model**: The model to use when none is specified (fetches available models)
+- **System Prompt File**: Path to custom system prompt (advanced users)
+
+Configuration is stored in `$HOME/.azion/.aicorp.env` for system-wide access.
+
+### Manual Configuration
+
+Alternatively, you can manually create the configuration file at `$HOME/.azion/.aicorp.env`:
+```bash
+# Create the Azion config directory
+mkdir -p ~/.azion
+
+# Edit the configuration file
+nano ~/.azion/.aicorp.env
+```
+
+Configuration file format:
 ```bash
 # AI Corp WebUI API configuration
 WEBUI_BASE_URL=https://ai.corp.azion.com
@@ -159,6 +190,8 @@ DEFAULT_MODEL=Azion Copilot
 # System prompt file path (relative to project root or absolute path)
 SYSTEM_PROMPT_FILE=config/system_prompt.txt
 ```
+
+**Note**: The system also supports legacy `.env` files in the project directory for backward compatibility.
 
 ### System Prompt Customization
 
@@ -181,6 +214,9 @@ You are an AI assistant expert in creating scripts for {platform_info}.
 
 ### Command Line Interface
 ```bash
+# Interactive configuration setup
+aicorp --config
+
 # Show available AI Corp models
 aicorp --list-models
 
