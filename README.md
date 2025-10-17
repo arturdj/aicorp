@@ -5,27 +5,29 @@ A modern, well-structured Python client for interacting with AI Corp's WebUI API
 ## Project Structure
 
 ```
-├── src/
-│   └── aicorp/
-│       ├── __init__.py        # Package initialization
-│       ├── api_client.py      # AI Corp WebUI API client implementation
-│       ├── config.py          # Configuration management
-│       ├── logger.py          # Logging configuration
-│       └── cli.py             # Command-line interface
-├── tests/
-│   ├── __init__.py            # Test package initialization
-│   ├── test_api_client.py     # API client tests
-│   └── test_config.py         # Configuration tests
-├── docs/
-│   └── README.md              # Documentation
-├── examples/
-│   └── basic_usage.py         # Usage examples
-├── aicorp                     # Main CLI entry point
-├── pyproject.toml             # Modern Python packaging configuration
-├── requirements.txt           # Python dependencies
-├── .env                       # Environment variables
-├── .gitignore                 # Git ignore patterns
-└── README.md                  # This file
+aicorp-client/
+├── src/aicorp/               # Source code
+│   ├── __init__.py           # Package initialization
+│   ├── cli.py                # Command-line interface
+│   ├── api_client.py         # API client implementation
+│   ├── config.py             # Configuration management
+│   └── logger.py             # Logging utilities
+├── config/                   # Configuration files
+│   └── system_prompt.txt     # AI system prompt template
+├── scripts/                  # Build and installation scripts
+│   ├── install.sh            # Installation script
+│   ├── uninstall.sh          # Uninstall script
+│   └── dist.sh               # Distribution preparation
+├── tests/                    # Test suite
+│   ├── test_api_client.py    # API client tests
+│   └── test_config.py        # Configuration tests
+├── docs/                     # Documentation
+├── examples/                 # Usage examples
+│   └── basic_usage.py        # Basic usage demonstration
+├── .env.example              # Environment template
+├── pyproject.toml            # Project metadata
+├── INSTALL.md                # Installation instructions
+└── README.md                 # This file
 ```
 
 ## Modules
@@ -67,26 +69,80 @@ A modern, well-structured Python client for interacting with AI Corp's WebUI API
 
 ## Installation
 
-### Option 1: Development Installation
-1. Clone the repository:
+### 🍎 macOS Quick Install (Recommended)
+
+1. **Clone the repository:**
    ```bash
    git clone <repository-url>
    cd aicorp-client
    ```
 
-2. Install in development mode:
+2. **Run the installation script:**
    ```bash
-   pip install -e .
+   ./scripts/install.sh
+   ```
+   
+   This script will:
+   - ✅ Check Python 3.8+ requirements and upgrade pip if needed
+   - 🔍 Detect virtual environment vs system installation
+   - 📦 Install the `aicorp` command with proper dependencies
+   - 🛠️ Fix urllib3 LibreSSL compatibility issues
+   - 📝 Create configuration file from template
+   - 🎯 Provide shell-specific PATH setup instructions
+   - 🤖 Optionally auto-configure your shell PATH
+
+3. **Configure your API settings:**
+   ```bash
+   nano .env  # Edit with your API credentials
    ```
 
-### Option 2: Direct Installation
+### Alternative Installation Methods
+
+#### Option 1: Manual pip Installation
+```bash
+# Install directly with pip
+pip install -e . --user
+
+# Add to PATH if needed (add to ~/.zshrc)
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+#### Option 2: Development Installation
+```bash
+# For developers who want to modify the code
+git clone <repository-url>
+cd aicorp-client
+pip install -e .
+```
+
+#### Option 3: From PyPI (when published)
 ```bash
 pip install aicorp-client
 ```
 
-### Option 3: From Source
+## Uninstallation
+
+To completely remove the AI Corp client:
+
 ```bash
-pip install -r requirements.txt
+# Comprehensive uninstall (recommended)
+./scripts/uninstall.sh
+```
+
+The uninstall script will:
+- Remove the `aicorp-client` package
+- Clean up the `aicorp` command
+- Optionally remove configuration and log files
+- Clean up Python cache and build artifacts
+
+**Quick uninstall:**
+```bash
+pip3 uninstall aicorp-client
+```
+
+**Using Makefile:**
+```bash
+make uninstall
 ```
 
 ## Configuration
@@ -96,6 +152,29 @@ Configure environment variables in `.env`:
 # AI Corp WebUI API configuration
 WEBUI_BASE_URL=https://ai.corp.azion.com
 WEBUI_API_KEY=your_api_key_here
+
+# Default model to use when none is specified
+DEFAULT_MODEL=Azion Copilot
+
+# System prompt file path (relative to project root or absolute path)
+SYSTEM_PROMPT_FILE=config/system_prompt.txt
+```
+
+### System Prompt Customization
+
+The AI Corp client uses a customizable system prompt loaded from a file. This allows you to:
+
+- **Customize AI behavior**: Modify the `config/system_prompt.txt` file to change how the AI responds
+- **Platform-aware responses**: The system prompt automatically includes your platform information
+- **Easy updates**: Change the system prompt without modifying code
+
+The system prompt file supports template variables:
+- `{platform_info}`: Automatically replaced with your OS information
+
+**Example system prompt structure:**
+```
+You are an AI assistant expert in creating scripts for {platform_info}.
+[Your custom instructions here...]
 ```
 
 ## Usage
@@ -106,13 +185,13 @@ WEBUI_API_KEY=your_api_key_here
 aicorp --list-models
 
 # Send a prompt with default model
-aicorp --prompt "Explain quantum computing"
+aicorp "Explain quantum computing"
 
 # Send a prompt with specific model
-aicorp --model "Azion Copilot" --prompt "Hello, world!"
+aicorp --model "Azion Copilot" "Hello, world!"
 
 # Verbose output for debugging
-aicorp -vvv --prompt "Debug this"
+aicorp -vvv "Debug this"
 ```
 
 ### Python API
@@ -139,6 +218,21 @@ pytest
 ```bash
 python examples/basic_usage.py
 ```
+
+## Key Features
+
+### 🚀 Installation & Setup
+- **Smart Environment Detection**: Automatically detects virtual environments vs system installations
+- **Interactive PATH Configuration**: Offers to automatically add aicorp to your shell configuration
+- **Shell-Aware Instructions**: Provides tailored setup commands for zsh, bash, and other shells
+- **Pip Version Management**: Automatically upgrades pip for modern Python packaging support
+- **LibreSSL Compatibility**: Fixed urllib3 compatibility issues on macOS systems
+
+### 🛠️ System Management
+- **Comprehensive Uninstall**: Complete removal with optional cleanup of configs and cache
+- **PATH Analysis**: Detects and warns about shell configuration modifications
+- **Dependency Management**: Proper version constraints for stable operation
+- **Cross-Platform Support**: Works on macOS with system Python and virtual environments
 
 ## AI Corp WebUI API Features
 

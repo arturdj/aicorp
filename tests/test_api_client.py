@@ -16,6 +16,7 @@ class TestAiCorpClient:
         self.config.models_endpoint = "https://test.com/api/models"
         self.config.generate_endpoint = "https://test.com/api/chat/completions"
         self.config.headers = {"Content-Type": "application/json"}
+        self.config.system_prompt = "You are a helpful AI assistant."
         
         self.client = AiCorpClient(self.config, verbosity=0)
 

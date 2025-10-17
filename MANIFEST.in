@@ -2,10 +2,13 @@ include README.md
 include LICENSE
 include requirements.txt
 include .env.example
+include INSTALL.md
 recursive-include src *.py
 recursive-include tests *.py
 recursive-include docs *.md
 recursive-include examples *.py
+recursive-include config *.txt
+recursive-include scripts *.sh
 global-exclude __pycache__
 global-exclude *.py[co]
 global-exclude .DS_Store

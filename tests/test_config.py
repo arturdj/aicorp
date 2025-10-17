@@ -13,18 +13,23 @@ class TestConfig:
         'WEBUI_BASE_URL': 'https://test.example.com',
         'WEBUI_API_KEY': 'test-api-key'
     })
-    def test_config_from_environment(self):
+    @patch('aicorp.config.Config._load_system_prompt')
+    def test_config_from_environment(self, mock_load_prompt):
         """Test config initialization from environment variables."""
+        mock_load_prompt.return_value = "Test system prompt"
         config = Config()
         
         assert config.base_url == 'https://test.example.com'
         assert config.api_key == 'test-api-key'
-        assert config.models_endpoint == 'https://test.example.com/api/models'
+        assert config.models_endpoint == 'https://test.example.com/api/v1/models'
         assert config.generate_endpoint == 'https://test.example.com/api/chat/completions'
+        assert config.system_prompt == "Test system prompt"
 
-    @patch.dict(os.environ, {}, clear=True)
-    def test_config_defaults(self):
+    @patch.dict(os.environ, {'WEBUI_BASE_URL': 'https://ai.corp.azion.com'}, clear=True)
+    @patch('aicorp.config.Config._load_system_prompt')
+    def test_config_defaults(self, mock_load_prompt):
         """Test config with default values when no environment variables are set."""
+        mock_load_prompt.return_value = "Default system prompt"
         config = Config()
         
         assert config.base_url == 'https://ai.corp.azion.com'
@@ -32,17 +37,59 @@ class TestConfig:
         assert 'Content-Type' in config.headers
         assert config.headers['Content-Type'] == 'application/json'
 
-    @patch.dict(os.environ, {'WEBUI_API_KEY': 'test-key'})
-    def test_config_with_api_key(self):
+    @patch.dict(os.environ, {
+        'WEBUI_BASE_URL': 'https://ai.corp.azion.com',
+        'WEBUI_API_KEY': 'test-key'
+    })
+    @patch('aicorp.config.Config._load_system_prompt')
+    def test_config_with_api_key(self, mock_load_prompt):
         """Test config headers when API key is provided."""
+        mock_load_prompt.return_value = "Test system prompt"
         config = Config()
         
         assert 'Authorization' in config.headers
         assert config.headers['Authorization'] == 'Bearer test-key'
 
-    def test_config_endpoints(self):
+    @patch.dict(os.environ, {'WEBUI_BASE_URL': 'https://ai.corp.azion.com'})
+    @patch('aicorp.config.Config._load_system_prompt')
+    def test_config_endpoints(self, mock_load_prompt):
         """Test endpoint URL construction."""
+        mock_load_prompt.return_value = "Test system prompt"
         config = Config()
         
-        assert config.models_endpoint.endswith('/api/models')
+        assert config.models_endpoint.endswith('/api/v1/models')
         assert config.generate_endpoint.endswith('/api/chat/completions')
+
+    @patch.dict(os.environ, {
+        'WEBUI_BASE_URL': 'https://ai.corp.azion.com',
+        'SYSTEM_PROMPT_FILE': 'test_prompt.txt'
+    })
+    @patch('builtins.open', new_callable=mock_open, read_data="Test prompt for {platform_info}")
+    @patch('os.path.exists')
+    @patch('platform.system')
+    @patch('platform.release')
+    @patch('platform.version')
+    def test_system_prompt_loading(self, mock_version, mock_release, mock_system, mock_exists, mock_file):
+        """Test system prompt loading from file with platform substitution."""
+        mock_exists.return_value = True
+        mock_system.return_value = "Darwin"
+        mock_release.return_value = "21.0.0"
+        mock_version.return_value = "Darwin Kernel Version 21.0.0"
+        
+        config = Config()
+        
+        assert "Test prompt for Darwin, 21.0.0, Darwin Kernel Version 21.0.0" in config.system_prompt
+        mock_file.assert_called_once()
+
+    @patch.dict(os.environ, {
+        'WEBUI_BASE_URL': 'https://ai.corp.azion.com',
+        'SYSTEM_PROMPT_FILE': 'nonexistent.txt'
+    })
+    @patch('os.path.exists')
+    def test_system_prompt_fallback(self, mock_exists):
+        """Test system prompt fallback when file doesn't exist."""
+        mock_exists.return_value = False
+        
+        config = Config()
+        
+        assert config.system_prompt == "You are a helpful AI assistant that provides accurate and useful responses."

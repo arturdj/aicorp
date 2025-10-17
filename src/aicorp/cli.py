@@ -4,6 +4,9 @@
 import argparse
 import textwrap
 import shutil
+import threading
+import time
+import sys
 from datetime import datetime
 from .config import Config
 from .api_client import AiCorpClient
@@ -44,6 +47,45 @@ class Colors:
     BG_MAGENTA = '\033[45m'
     BG_CYAN = '\033[46m'
     BG_WHITE = '\033[47m'
+    BG_GREY = '\033[100m'
+    BG_DARK_BLUE = '\033[104m'
+
+
+class ProgressIndicator:
+    """Animated progress indicator for long-running operations."""
+    
+    def __init__(self, message="Processing"):
+        self.message = message
+        self.running = False
+        self.thread = None
+        self.spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+        self.current_char = 0
+    
+    def _animate(self):
+        """Animation loop that runs in a separate thread."""
+        while self.running:
+            char = self.spinner_chars[self.current_char]
+            sys.stdout.write(f'\r{Colors.CYAN}{char} {self.message}...{Colors.RESET}')
+            sys.stdout.flush()
+            self.current_char = (self.current_char + 1) % len(self.spinner_chars)
+            time.sleep(0.1)
+    
+    def start(self):
+        """Start the progress indicator."""
+        if not self.running:
+            self.running = True
+            self.thread = threading.Thread(target=self._animate, daemon=True)
+            self.thread.start()
+    
+    def stop(self):
+        """Stop the progress indicator and clear the line."""
+        if self.running:
+            self.running = False
+            if self.thread:
+                self.thread.join(timeout=0.2)
+            # Clear the progress line
+            sys.stdout.write('\r' + ' ' * (len(self.message) + 10) + '\r')
+            sys.stdout.flush()
 
 
 def get_terminal_width():
@@ -96,7 +138,7 @@ def format_ai_response(response_data, prompt, model=None):
             in_code_block = not in_code_block
             if in_code_block:
                 # Start of code block - minimal header
-                print(f"{Colors.WHITE}Command:{Colors.RESET} {Colors.DIM}(triple click to select and cmd + c to copy){Colors.RESET}")
+                print(f"{Colors.WHITE}{Colors.BOLD}Command:{Colors.RESET} {Colors.DIM}(triple click to select and cmd + c to copy){Colors.RESET}")
                 print()
             else:
                 # End of code block - just a separator
@@ -107,7 +149,7 @@ def format_ai_response(response_data, prompt, model=None):
             # Format command lines for easy copying
             clean_line = line.strip()
             if clean_line:
-                print(f"{Colors.BRIGHT_YELLOW}{clean_line}{Colors.RESET}")
+                print(f"{Colors.BOLD}{Colors.BRIGHT_BLUE}{clean_line}{Colors.RESET}")
             else:
                 print()
         else:
@@ -133,6 +175,9 @@ def show_models(config, verbosity=2):
     client = AiCorpClient(config, verbosity=verbosity)
     
     # Get raw response to access full model data
+    progress = ProgressIndicator("Fetching models")
+    progress.start()
+    
     try:
         import requests
         response = requests.get(
@@ -164,7 +209,7 @@ def show_models(config, verbosity=2):
                         print(f"{Colors.WHITE}{model_id}{Colors.RESET}")
                 
                 print(f"{Colors.CYAN}{'─' * separator_width}{Colors.RESET}")
-                print(f"{Colors.DIM}Usage: aicorp -m \"<Model ID>\" -p \"Your prompt\"{Colors.RESET}")
+                print(f"{Colors.DIM}Usage: aicorp --model \"<Model ID>\" \"Your prompt\"{Colors.RESET}")
                 
                 # Return just the IDs for compatibility
                 return [model.get("id", "") for model in models_data]
@@ -179,6 +224,8 @@ def show_models(config, verbosity=2):
         logger.error(f"Error fetching models: {str(e)}")
         print("Failed to fetch AI Corp models")
         return None
+    finally:
+        progress.stop()
 
 
 def send_prompt(config, prompt, model=None, verbosity=2):
@@ -191,10 +238,17 @@ def send_prompt(config, prompt, model=None, verbosity=2):
     if model:
         available_models = client.get_models()
         if available_models and model not in available_models:
-            print(f"Error: Model '{model}' not found in available models.")
+            print(f"Error: Model '{model}' not found in available_models.")
             return "invalid_model"
     
-    response = client.send_prompt(prompt, model=model)
+    # Show progress indicator during API call
+    progress = ProgressIndicator("Asking {} for help...".format(model))
+    progress.start()
+    
+    try:
+        response = client.send_prompt(prompt, model=model)
+    finally:
+        progress.stop()
     
     if response:
         # Use beautiful formatting for the response
@@ -205,7 +259,7 @@ def send_prompt(config, prompt, model=None, verbosity=2):
         return False
 
 
-def create_parser():
+def create_parser(default_model="Azion Copilot"):
     """Create and configure argument parser."""
     parser = argparse.ArgumentParser(
         description="AI Corp WebUI API client for model management and text generation",
@@ -213,36 +267,34 @@ def create_parser():
         epilog="""
 Examples:
   %(prog)s --list-models                      # Show available AI Corp models
-  %(prog)s --prompt "Hello, world!"          # Send prompt with default model
-  %(prog)s --model gpt-3.5 --prompt "Hi!"    # Send prompt with specific model
-  %(prog)s -v --prompt "Hello!"              # Send prompt with verbose logging
-  %(prog)s -vvv --list-models                # Show models with debug logging
+  %(prog)s "Hello, world!"                    # Send prompt with default model
+  %(prog)s --model gpt-3.5 "Hi!"              # Send prompt with specific model
+  %(prog)s -v "Hello!"                        # Send prompt with verbose logging
+  %(prog)s -vvv --list-models                 # Show models with debug logging
         """
     )
     
-    # Create mutually exclusive group for list-models and prompt
-    action_group = parser.add_mutually_exclusive_group()
+    # Add positional argument for prompt
+    parser.add_argument(
+        'prompt',
+        nargs='?',
+        type=str,
+        help='Prompt to send to the AI Corp WebUI API'
+    )
     
-    action_group.add_argument(
+    parser.add_argument(
         '-l',
         '--list-models',
         action='store_true',
         help='Show available AI Corp models'
     )
     
-    action_group.add_argument(
-        '-p',
-        '--prompt',
-        type=str,
-        help='Send a prompt to the AI Corp WebUI API'
-    )
-    
     parser.add_argument(
         '-m',
         '--model',
         type=str,
-        default="Azion Copilot",
-        help='Specify the model to use for generation'
+        default=default_model,
+        help=f'Specify the model to use for generation (default: {default_model})'
     )
     
     parser.add_argument(
@@ -258,18 +310,30 @@ Examples:
 
 def main():
     """Main function with command-line interface."""
-    parser = create_parser()
-    args = parser.parse_args()
-    logger = setup_logger(__name__, verbosity=args.verbose)
+    try:
+        # Load config first to get default model
+        config = Config()
+        parser = create_parser(default_model=config.default_model)
+        args = parser.parse_args()
+        logger = setup_logger(__name__, verbosity=args.verbose)
+    except ValueError as e:
+        # Handle config loading errors (e.g., missing WEBUI_BASE_URL)
+        print(f"{Colors.RED}Configuration error: {str(e)}{Colors.RESET}")
+        print(f"{Colors.DIM}Please check your .env file configuration{Colors.RESET}")
+        return
+    except Exception as e:
+        # Handle other initialization errors
+        print(f"{Colors.RED}Initialization error: {str(e)}{Colors.RESET}")
+        return
     
     try:
+        
         logger.info("Script started - AI Corp WebUI API client initialized")
-        config = Config()
         
         # Validate model option usage - only check if model was explicitly provided
         # We need to check if model was explicitly set (not just using default)
-        if args.model != "Azion Copilot" and not args.prompt:
-            print("Error: --model option requires --prompt to be specified")
+        if args.model != config.default_model and not args.prompt:
+            print("Error: --model option requires a prompt to be specified")
             parser.print_help()
             return
         
@@ -292,6 +356,10 @@ def main():
         if not executed_command:
             parser.print_help()
             
+    except KeyboardInterrupt:
+        print(f"\n{Colors.YELLOW}Operation cancelled by user (Ctrl+C){Colors.RESET}")
+        logger.info("Operation cancelled by user")
+        return
     except Exception as e:
         logger.error(f"Unexpected error occurred: {str(e)}")
         print(f"Unexpected error: {str(e)}")

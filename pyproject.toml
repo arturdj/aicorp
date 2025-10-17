@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aicorp-client"
-version = "1.0.0"
-description = "A Python client for interacting with AI Corp's WebUI API service"
+version = "1.1.0"
+description = "A modern Python client for AI Corp's WebUI API with smart installation, LibreSSL compatibility, and comprehensive system management"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "AI Corp Team", email = "team@aicorp.com"}
+    {name = "@arturdj", email = "artur.rossa@azion.com"}
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -29,6 +29,7 @@ requires-python = ">=3.8"
 dependencies = [
     "requests>=2.25.0",
     "python-dotenv>=0.19.0",
+    "urllib3>=1.26.0,<2.0.0",  # Fix LibreSSL compatibility warning
 ]
 
 [project.optional-dependencies]
