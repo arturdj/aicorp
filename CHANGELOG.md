@@ -2,6 +2,25 @@
 
 All notable changes to the aicorp-client project.
 
+## [1.3.0] - 2025-10-23
+
+### Added
+- Interactive model selector with search and navigation capabilities
+- Real-time search filtering for model selection during configuration
+- Arrow key navigation (↑/↓) through model lists
+- Visual highlighting of selected and current models
+- Keyboard shortcuts: Enter to select, Escape to cancel, Backspace for search
+- Pagination support for large model lists (displays up to 10 models at a time)
+- Terminal compatibility handling with graceful fallbacks
+
+### Changed
+- Replaced manual model entry with interactive selector in `--config` command
+- Enhanced user experience for model selection with intuitive interface
+- Improved visual feedback during configuration setup
+
+### Removed
+- Manual model name/index entry option (replaced by interactive selector)
+
 ## [1.2.1] - 2025-10-17
 
 ### Added

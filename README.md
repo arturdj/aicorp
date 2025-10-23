@@ -80,11 +80,17 @@ pip install aicorp-client
 aicorp --config
 ```
 
-Configure the following parameters:
+The interactive configuration wizard will guide you through setting up:
 - **WEBUI_BASE_URL**: API endpoint (default: `https://ai.corp.azion.com`)
 - **WEBUI_API_KEY**: Authentication token (required)
-- **DEFAULT_MODEL**: Default model for requests
+- **DEFAULT_MODEL**: Default model for requests (with interactive selector)
 - **SYSTEM_PROMPT_FILE**: Path to system prompt template
+
+The model selection features an interactive interface with:
+- Real-time search filtering (type to filter models)
+- Arrow key navigation (↑/↓ to browse)
+- Visual highlighting of current selection
+- Keyboard shortcuts: Enter to select, Escape to cancel
 
 ### Manual Configuration
 

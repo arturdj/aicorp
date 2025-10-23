@@ -2,7 +2,154 @@
 
 import os
 import re
+import sys
+import termios
+import tty
 from typing import Dict, Optional, List
+
+
+class InteractiveModelSelector:
+    """Interactive model selector with search and arrow key navigation."""
+    
+    def __init__(self, models: List[str], current_model: Optional[str] = None):
+        """Initialize the selector with available models."""
+        self.all_models = models
+        self.current_model = current_model
+        self.search_term = ""
+        self.filtered_models = models.copy()
+        self.selected_index = 0
+        
+        # Find current model index if it exists
+        if current_model and current_model in models:
+            self.selected_index = models.index(current_model)
+    
+    def _get_char(self):
+        """Get a single character from stdin without pressing Enter."""
+        try:
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+            try:
+                tty.setraw(sys.stdin.fileno())
+                ch = sys.stdin.read(1)
+                return ch
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        except (termios.error, OSError):
+            # Fallback for environments where termios doesn't work
+            return input()
+    
+    def _filter_models(self):
+        """Filter models based on search term."""
+        if not self.search_term:
+            self.filtered_models = self.all_models.copy()
+        else:
+            search_lower = self.search_term.lower()
+            self.filtered_models = [
+                model for model in self.all_models 
+                if search_lower in model.lower()
+            ]
+        
+        # Reset selection if current selection is out of bounds
+        if self.selected_index >= len(self.filtered_models):
+            self.selected_index = max(0, len(self.filtered_models) - 1)
+    
+    def _display_models(self):
+        """Display the current list of models with highlighting."""
+        from .cli import Colors
+        
+        # Clear screen and move cursor to top
+        print('\033[2J\033[H', end='')
+        
+        print(f"{Colors.BOLD}{Colors.BLUE}🔍 Select Default Model{Colors.RESET}")
+        print(f"{Colors.DIM}Use ↑/↓ to navigate, type to search, Enter to select, Esc to cancel{Colors.RESET}\n")
+        
+        # Show search bar
+        search_display = self.search_term if self.search_term else ""
+        print(f"Search: {Colors.WHITE}{search_display}█{Colors.RESET}")
+        print(f"{Colors.DIM}{'─' * 50}{Colors.RESET}")
+        
+        # Show filtered models
+        if not self.filtered_models:
+            print(f"{Colors.RED}No models found matching '{self.search_term}'{Colors.RESET}")
+            return
+        
+        # Display up to 10 models at a time
+        start_idx = max(0, self.selected_index - 5)
+        end_idx = min(len(self.filtered_models), start_idx + 10)
+        
+        for i in range(start_idx, end_idx):
+            model = self.filtered_models[i]
+            prefix = "  "
+            
+            if i == self.selected_index:
+                # Highlighted selection
+                print(f"{Colors.CYAN}► {model}{Colors.RESET}")
+            elif model == self.current_model:
+                # Current model indicator
+                print(f"{Colors.GREEN}✓ {model} {Colors.DIM}(current){Colors.RESET}")
+            else:
+                print(f"  {model}")
+        
+        # Show navigation hint if there are more models
+        if len(self.filtered_models) > 10:
+            shown = end_idx - start_idx
+            total = len(self.filtered_models)
+            print(f"\n{Colors.DIM}Showing {shown} of {total} models{Colors.RESET}")
+    
+    def select_model(self) -> Optional[str]:
+        """Run the interactive model selection and return the selected model."""
+        if not self.all_models:
+            return None
+        
+        self._filter_models()
+        
+        while True:
+            self._display_models()
+            
+            try:
+                char = self._get_char()
+                
+                # Handle special keys
+                if char == '\x1b':  # Escape sequence
+                    # Read the next two characters for arrow keys
+                    next_chars = sys.stdin.read(2) if sys.stdin.isatty() else ''
+                    if next_chars == '[A':  # Up arrow
+                        if self.filtered_models and self.selected_index > 0:
+                            self.selected_index -= 1
+                    elif next_chars == '[B':  # Down arrow
+                        if self.filtered_models and self.selected_index < len(self.filtered_models) - 1:
+                            self.selected_index += 1
+                    else:
+                        # Just Escape key - cancel
+                        print('\033[2J\033[H', end='')  # Clear screen
+                        return None
+                
+                elif char == '\r' or char == '\n':  # Enter
+                    if self.filtered_models and 0 <= self.selected_index < len(self.filtered_models):
+                        selected_model = self.filtered_models[self.selected_index]
+                        print('\033[2J\033[H', end='')  # Clear screen
+                        return selected_model
+                
+                elif char == '\x7f' or char == '\x08':  # Backspace
+                    if self.search_term:
+                        self.search_term = self.search_term[:-1]
+                        self._filter_models()
+                
+                elif char.isprintable() and len(char) == 1:
+                    # Regular character - add to search
+                    self.search_term += char
+                    self._filter_models()
+                
+                elif char == '\x03':  # Ctrl+C
+                    print('\033[2J\033[H', end='')  # Clear screen
+                    raise KeyboardInterrupt
+                    
+            except KeyboardInterrupt:
+                print('\033[2J\033[H', end='')  # Clear screen
+                return None
+            except Exception:
+                # Fallback for any terminal issues
+                continue
 
 
 class ConfigManager:
@@ -241,42 +388,30 @@ class ConfigManager:
         print(f"{Colors.DIM}   Fetching available models...{Colors.RESET}")
         available_models = self.get_available_models()
         
-        if available_models:
-            print(f"{Colors.GREEN}   Available models:{Colors.RESET}")
-            for i, model in enumerate(available_models[:10], 1):  # Show first 10
-                marker = " ← current" if model == current_model else ""
-                print(f"{Colors.DIM}   {i:2d}. {model}{marker}{Colors.RESET}")
-            if len(available_models) > 10:
-                print(f"{Colors.DIM}   ... and {len(available_models) - 10} more{Colors.RESET}")
-        else:
-            print(f"{Colors.YELLOW}   Could not fetch models (will use default){Colors.RESET}")
-        
-        model_prompt = f"   Enter model name or index number"
-        if current_model:
-            model_prompt += f" (press Enter to keep current)"
-        model_prompt += ": "
-        
-        new_model_input = input(model_prompt).strip()
-        if new_model_input:
-            # Check if input is a number (index)
-            if new_model_input.isdigit():
-                index = int(new_model_input)
-                if available_models and 1 <= index <= len(available_models):
-                    new_config['DEFAULT_MODEL'] = available_models[index - 1]
-                else:
-                    print(f"{Colors.RED}   Invalid index. Please enter a number between 1 and {len(available_models) if available_models else 0}.{Colors.RESET}")
-                    # Fall back to asking again or using current/default
-                    if current_model:
-                        new_config['DEFAULT_MODEL'] = current_model
-                    else:
-                        new_config['DEFAULT_MODEL'] = 'Azion Copilot'
+        if available_models and len(available_models) > 1:
+            print(f"{Colors.GREEN}   Found {len(available_models)} available models{Colors.RESET}")
+            print(f"{Colors.DIM}   Opening interactive model selector...{Colors.RESET}")
+            
+            # Use interactive selector
+            selector = InteractiveModelSelector(available_models, current_model)
+            selected_model = selector.select_model()
+            
+            if selected_model:
+                new_config['DEFAULT_MODEL'] = selected_model
+                print(f"{Colors.GREEN}   Selected: {selected_model}{Colors.RESET}")
             else:
-                # Input is a model name
-                new_config['DEFAULT_MODEL'] = new_model_input
-        elif current_model:
-            new_config['DEFAULT_MODEL'] = current_model
+                # User cancelled, keep current model
+                new_config['DEFAULT_MODEL'] = current_model
+                print(f"{Colors.YELLOW}   Selection cancelled, keeping current model: {current_model}{Colors.RESET}")
+        
         else:
-            new_config['DEFAULT_MODEL'] = 'Azion Copilot'
+            # No models available or only one model - use current/default
+            if available_models and len(available_models) == 1:
+                new_config['DEFAULT_MODEL'] = available_models[0]
+                print(f"{Colors.GREEN}   Only one model available: {available_models[0]}{Colors.RESET}")
+            else:
+                print(f"{Colors.YELLOW}   Could not fetch models (will use current/default){Colors.RESET}")
+                new_config['DEFAULT_MODEL'] = current_model if current_model else 'Azion Copilot'
         
         print()
         

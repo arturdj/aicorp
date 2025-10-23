@@ -1,4 +1,4 @@
-aicorp-client Distribution Package v1.2.1
+aicorp-client Distribution Package v1.3.0
 ==========================================
 
 Python client library for AI Corp WebUI API.
